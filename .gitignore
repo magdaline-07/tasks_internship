@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 *.suo
 *.user
 _ReSharper.*
 bin
 obj
 packages
+=======
+obj/
+bin/
+.vs
+>>>>>>> 37f128b23990ebc1ec7582ebba4b4271d56ff252
