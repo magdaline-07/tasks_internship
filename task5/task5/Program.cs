@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 class Program
 {
-    static async Task Main()
+    static void Main()
     {
         Console.Write("Введите строку: ");
         string input = Console.ReadLine() ?? "";
@@ -18,7 +15,7 @@ class Program
         if (invalidChars.Length > 0)
         {
             Console.WriteLine("Ошибка: Неподходящая строка. Строка содержит недопустимые символы:");
-            Console.WriteLine(string.Join(", ", invalidChars)); // Выводим список недопустимых символов
+            Console.WriteLine(string.Join(", ", invalidChars));
         }
         else
         {
@@ -31,57 +28,66 @@ class Program
 
             // Вывожу результат, отсортированный по символу
             foreach (var kvp in charCounts.OrderBy(c => c.Key))
+            {
                 Console.WriteLine($"{kvp.Key}: {kvp.Value}");
+            }
 
             // Поиск подстроки с началом и концом на гласную
             string vowelSubstring = FindLongestVowelSubstring(result);
             Console.WriteLine("Наибольшая подстрока с началом и концом на гласную:");
             Console.WriteLine(vowelSubstring.Length > 0 ? vowelSubstring : "(не найдена)");
 
-            // Метод сортировки
-            Console.WriteLine("Выберите метод сортировки: quick / tree");
+            // Выбор сортировки
+            Console.WriteLine("Выберите метод сортировки: Quicksort/ Tree sort");
             string choice = Console.ReadLine() ?? "quick";
-            string sorted = choice.ToLower() == "tree" ? TreeSort(result) : QuickSort(result.ToCharArray(), 0, result.Length - 1);
+            string sorted = "";
+
+            if (choice.ToLower() == "tree")
+                sorted = TreeSort(result);
+            else
+                sorted = QuickSort(result.ToCharArray(), 0, result.Length - 1);
+
             Console.WriteLine($"Отсортированная строка ({choice}): {sorted}");
-
-            // Случайное число
-            int randomIndex = await GetRandomNumberAsync(result.Length);
-            Console.WriteLine($"Удаляем символ на позиции: {randomIndex}");
-
-            string reduced = RemoveAt(result, randomIndex);
-            Console.WriteLine($"Урезанная строка: {reduced}");
         }
     }
 
     static string ProcessString(string input)
     {
-        if (input.Length % 2 == 0)
+        int length = input.Length;
+
+        if (length % 2 == 0)
         {
-            int half = input.Length / 2;
-            return Reverse(input[..half]) + Reverse(input[half..]);
+            int half = length / 2;
+            string part1 = Reverse(input.Substring(0, half));
+            string part2 = Reverse(input.Substring(half));
+            return part1 + part2;
         }
-        return Reverse(input) + input;
+        else
+        {
+            return Reverse(input) + input;
+        }
     }
 
     static string Reverse(string s)
     {
-        var arr = s.ToCharArray();
+        char[] arr = s.ToCharArray();
         Array.Reverse(arr);
         return new string(arr);
     }
 
     static Dictionary<char, int> CountCharacters(string s)
     {
-        var dict = new Dictionary<char, int>();
-        foreach (var c in s)
+        Dictionary<char, int> counts = new();
+        foreach (char c in s)
         {
-            if (dict.ContainsKey(c)) dict[c]++;
-            else dict[c] = 1;
+            if (counts.ContainsKey(c))
+                counts[c]++;
+            else
+                counts[c] = 1;
         }
-        return dict;
+        return counts;
     }
 
-    // Поиск наибольшей подстроки, начинающейся и заканчивающейся на гласную
     static string FindLongestVowelSubstring(string s)
     {
         string vowels = "aeiouy";
@@ -91,11 +97,12 @@ class Program
         for (int i = 0; i < s.Length; i++)
         {
             if (!vowels.Contains(s[i])) continue;
+
             for (int j = s.Length - 1; j > i; j--)
             {
                 if (vowels.Contains(s[j]))
                 {
-                    var sub = s.Substring(i, j - i + 1);
+                    string sub = s.Substring(i, j - i + 1);
                     if (sub.Length > maxLen)
                     {
                         maxLen = sub.Length;
@@ -105,6 +112,7 @@ class Program
                 }
             }
         }
+
         return longest;
     }
 
@@ -118,6 +126,7 @@ class Program
         {
             while (arr[i] < pivot) i++;
             while (arr[j] > pivot) j--;
+
             if (i <= j)
             {
                 (arr[i], arr[j]) = (arr[j], arr[i]);
@@ -179,32 +188,5 @@ class Program
         List<char> sorted = new();
         root.InOrderTraversal(sorted);
         return new string(sorted.ToArray());
-    }
-
-
-// Получение случайного числа через API или fallback
-static async Task<int> GetRandomNumberAsync(int maxExclusive) // Асинхронное получение случайное число 
-    {
-        try
-        {
-            using HttpClient client = new(); // отправка HTTP-запросов
-            string url = $"https://www.randomnumberapi.com/api/v1.0/random?min=0&max={maxExclusive - 1}&count=1"; // URL для API 
-            var response = await client.GetStringAsync(url); // get запрос, получение ответа 
-            var numbers = JsonSerializer.Deserialize<List<int>>(response); // Преобразование строки JSON в список целых чисел
-            return numbers?.FirstOrDefault() ?? new Random().Next(0, maxExclusive); // Возвращение первого числа из списка (или генерация случайного, если список пустой)
-        }
-        catch
-        {
-            Console.WriteLine("(API недоступно, использован локальный генератор)");
-
-            // Случайное число генерируется средства .NET, если API недоступно
-            return new Random().Next(0, maxExclusive);
-        }
-    }
-
-    // Метод для удаления символа по заданному индексу
-    static string RemoveAt(string s, int index)
-    {
-        return s.Remove(index, 1); 
     }
 }
